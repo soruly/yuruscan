@@ -15,7 +15,7 @@
       "purpose": "maskable"
     }
   ],
-  "start_url": "/",
+  "start_url": "/yuruscan/",
   "display": "standalone",
   "display_override": ["window-controls-overlay"],
   "orientation": "natural",
