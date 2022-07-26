@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html translate="no">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+  />
+  <meta name="google" content="notranslate" />
+  <meta name="robots" content="noindex, nofollow" />
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <meta name="theme-color" content="#000000" />
+
+  <title>ゆるスキャン</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="apple-touch-icon" href="favicon.png" />
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, sans-serif, Meiryo;
+      user-select: none;
+      -webkit-user-select: none;
+      overscroll-behavior: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    video {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: rgba(0, 0, 0, 1);
+    }
+
+    .console {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      min-height: 15vh;
+      padding: 0.5rem 1rem;
+      word-break: break-all;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 1.25rem;
+      color: rgba(255, 255, 255, 1);
+      text-shadow: 0 0 0.25rem rgba(0, 0, 0, 1), 0 0 0.25rem rgba(0, 0, 0, 1),
+        0 0 0.25rem rgba(0, 0, 0, 1);
+      background-color: transparent;
+      backdrop-filter: blur(0.5rem) brightness(0.5);
+      -webkit-backdrop-filter: blur(0.5rem) brightness(0.5);
+      border-top: 0.0625rem solid rgba(255, 255, 255, 0.5);
+      box-shadow: 0 0 0.25rem rgba(0, 0, 0, 1);
+    }
+  </style>
+
+  <video playsinline></video>
+  <div class="console"></div>
+  <script>
+    if (navigator.serviceWorker) navigator.serviceWorker.register("sw.js");
+
+    const barcodeDetector = "BarcodeDetector" in window ? new BarcodeDetector() : null;
+
+    let result;
+    (async () => {
+      if (!barcodeDetector) {
+        document.querySelector(".console").innerText =
+          "BarcodeDetector is not supported in this browser";
+        return;
+      }
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: "environment" },
+      });
+      const video = document.querySelector("video");
+      video.srcObject = mediaStream;
+      video.onloadedmetadata = (e) => {
+        video.play();
+      };
+
+      while (true) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        if (document.querySelector("video").readyState !== 4) continue;
+        const results = await barcodeDetector.detect(document.querySelector("video"));
+        if (results.length) {
+          result = results[0]?.rawValue ?? null;
+          document.querySelector(".console").innerText = result;
+        } else {
+          document.querySelector(".console").innerText = "";
+        }
+      }
+    })();
+
+    // document.querySelector(".stop").addEventListener("click", async () => {
+    //   if (!mediaStream) return;
+    //   for (const track of mediaStream.getTracks()) {
+    //     track.stop();
+    //   }
+    // });
+
+    document.querySelector(".console").addEventListener("click", async (e) => {
+      if (!result) return;
+      if (result.match(/https?:\/\//)) {
+        if (confirm(`Open URL?\n${result}`)) {
+          window.open(result);
+        }
+      }
+      await navigator.clipboard.writeText(result);
+    });
+  </script>
+</html>
