@@ -67,7 +67,11 @@
   <video playsinline></video>
   <div class="console"></div>
   <script>
-    if (navigator.serviceWorker) navigator.serviceWorker.register("sw.js");
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.register(`${window.location.pathname}sw.js`, {
+        scope: window.location.pathname,
+      });
+    }
 
     const barcodeDetector = "BarcodeDetector" in window ? new BarcodeDetector() : null;
 
